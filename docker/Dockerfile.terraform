@@ -1,0 +1,8 @@
+ARG IMG
+FROM ${IMG}
+
+RUN apk add curl unzip
+RUN curl -sL https://releases.hashicorp.com/terraform/1.6.1/terraform_1.6.1_linux_amd64.zip -o terraform_1.6.1_linux_amd64.zip
+RUN unzip terraform_1.6.1_linux_amd64.zip && rm -rf terraform_1.6.1_linux_amd64.zip
+RUN mv terraform /usr/bin/
+ENTRYPOINT [ "terraform" ]
