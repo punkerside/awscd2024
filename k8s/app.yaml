@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: container-demo
+  namespace: default
+  labels:
+    app: container-demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: container-demo
+  template:
+    metadata:
+      labels:
+        app: container-demo
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: container-demo
+        image: punkerside/noroot:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /user/
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 3
+        readinessProbe:
+          httpGet:
+            path: /user/
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 3
+        resources:
+          requests:
+            cpu: "30m"
+            memory: "32Mi"
+          limits:
+            cpu: "30m"
+            memory: "32Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: container-demo
+  namespace: default
+spec:
+  selector:
+    app: container-demo
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
