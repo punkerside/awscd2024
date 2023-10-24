@@ -6,3 +6,6 @@ passwd
 terraform.tfstate
 .aws/
 terraform.tfstate.backup
+.config/
+.cache/
+.ansible/

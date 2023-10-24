@@ -213,7 +213,6 @@ resource "aws_ecs_service" "main" {
   propagate_tags                    = "NONE"
   platform_version                  = "LATEST"
   launch_type                       = "FARGATE"
-#  iam_role                          = "/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS"
 
   network_configuration {
     subnets         = module.vpc.subnet_private_ids.*.id
@@ -231,95 +230,95 @@ resource "aws_ecs_service" "main" {
   }
 }
 
-# eks
+# # eks
 
-resource "aws_eks_cluster" "main" {
-  name                      = var.name
-  role_arn                  = aws_iam_role.main.arn
-  version                   = "1.27"
-  enabled_cluster_log_types = []
+# resource "aws_eks_cluster" "main" {
+#   name                      = var.name
+#   role_arn                  = aws_iam_role.main.arn
+#   version                   = "1.27"
+#   enabled_cluster_log_types = []
 
-  tags = {
-    Name = var.name
-  }
+#   tags = {
+#     Name = var.name
+#   }
 
-  vpc_config {
-    subnet_ids              = concat(sort(module.vpc.subnet_private_ids.*.id), sort(module.vpc.subnet_public_ids.*.id), )
-    endpoint_private_access = false
-    endpoint_public_access  = true
-  }
+#   vpc_config {
+#     subnet_ids              = concat(sort(module.vpc.subnet_private_ids.*.id), sort(module.vpc.subnet_public_ids.*.id), )
+#     endpoint_private_access = false
+#     endpoint_public_access  = true
+#   }
 
-  depends_on = [
-    aws_iam_role_policy_attachment.AmazonEKSClusterPolicy,
-    aws_iam_role_policy_attachment.AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.AmazonEKS_CNI_Policy
-  ]
-}
+#   depends_on = [
+#     aws_iam_role_policy_attachment.AmazonEKSClusterPolicy,
+#     aws_iam_role_policy_attachment.AmazonEKSWorkerNodePolicy,
+#     aws_iam_role_policy_attachment.AmazonEKS_CNI_Policy
+#   ]
+# }
 
-resource "aws_eks_fargate_profile" "main" {
-  cluster_name           = aws_eks_cluster.main.name
-  fargate_profile_name   = "default"
-  pod_execution_role_arn = aws_iam_role.main.arn
-  subnet_ids             = module.vpc.subnet_private_ids.*.id
+# resource "aws_eks_fargate_profile" "main" {
+#   cluster_name           = aws_eks_cluster.main.name
+#   fargate_profile_name   = "default"
+#   pod_execution_role_arn = aws_iam_role.main.arn
+#   subnet_ids             = module.vpc.subnet_private_ids.*.id
 
-  selector {
-    namespace = "default"
-  }
+#   selector {
+#     namespace = "default"
+#   }
 
-  selector {
-    namespace = "kube-system"
-  }
-}
+#   selector {
+#     namespace = "kube-system"
+#   }
+# }
 
-resource "aws_iam_role" "k8s" {
-  name               = "${var.name}-k8s"
-  assume_role_policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "Federated": "arn:aws:iam::${data.aws_caller_identity.main.account_id}:oidc-provider/oidc.eks.${data.aws_region.main.name}.amazonaws.com/id/${substr(aws_eks_cluster.main.identity.0.oidc.0.issuer, -32, -1)}"
-            },
-            "Action": "sts:AssumeRoleWithWebIdentity",
-            "Condition": {
-                "StringEquals": {
-                    "oidc.eks.${data.aws_region.main.name}.amazonaws.com/id/${substr(aws_eks_cluster.main.identity.0.oidc.0.issuer, -32, -1)}:aud": "sts.amazonaws.com"
-                }
-            }
-        }
-    ]
-}
-EOF
+# resource "aws_iam_role" "k8s" {
+#   name               = "${var.name}-k8s"
+#   assume_role_policy = <<EOF
+# {
+#     "Version": "2012-10-17",
+#     "Statement": [
+#         {
+#             "Effect": "Allow",
+#             "Principal": {
+#                 "Federated": "arn:aws:iam::${data.aws_caller_identity.main.account_id}:oidc-provider/oidc.eks.${data.aws_region.main.name}.amazonaws.com/id/${substr(aws_eks_cluster.main.identity.0.oidc.0.issuer, -32, -1)}"
+#             },
+#             "Action": "sts:AssumeRoleWithWebIdentity",
+#             "Condition": {
+#                 "StringEquals": {
+#                     "oidc.eks.${data.aws_region.main.name}.amazonaws.com/id/${substr(aws_eks_cluster.main.identity.0.oidc.0.issuer, -32, -1)}:aud": "sts.amazonaws.com"
+#                 }
+#             }
+#         }
+#     ]
+# }
+# EOF
 
-  tags = {
-    Name = "${var.name}-k8s"
-  }
-}
+#   tags = {
+#     Name = "${var.name}-k8s"
+#   }
+# }
 
-resource "aws_iam_role_policy" "k8s" {
-  name = "${var.name}-k8s"
-  role = aws_iam_role.k8s.id
+# resource "aws_iam_role_policy" "k8s" {
+#   name = "${var.name}-k8s"
+#   role = aws_iam_role.k8s.id
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "elasticloadbalancing:*",
-        "ecs:*",
-        "ecr:*",
-        "ec2:*",
-        "acm:*",
-        "cognito-idp:*",
-        "iam:*"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-EOF
-}
+#   policy = <<EOF
+# {
+#   "Version": "2012-10-17",
+#   "Statement": [
+#     {
+#       "Effect": "Allow",
+#       "Action": [
+#         "elasticloadbalancing:*",
+#         "ecs:*",
+#         "ecr:*",
+#         "ec2:*",
+#         "acm:*",
+#         "cognito-idp:*",
+#         "iam:*"
+#       ],
+#       "Resource": "*"
+#     }
+#   ]
+# }
+# EOF
+# }

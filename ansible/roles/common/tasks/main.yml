@@ -1,0 +1,21 @@
+- name: update all packages to the latest version
+  apt:
+    upgrade: dist
+
+- name: install common packages
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - gcc
+
+- name: configure limits
+  shell: echo "fs.file-max=500000" >> /etc/sysctl.conf
+
+- name: copy limits config
+  copy:
+    src: "{{ role_path }}/files/limits.conf"
+    dest: /etc/security/limits.conf
+    owner: root
+    group: root
+    mode: 0755

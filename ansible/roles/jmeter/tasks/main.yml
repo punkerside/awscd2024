@@ -1,0 +1,26 @@
+- name: update all packages to the latest version
+  apt:
+    upgrade: dist
+
+- name: install common packages
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - default-jre
+    - curl
+    - unzip
+
+- name: download apache jmeter
+  get_url:
+    url: https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.zip
+    dest: /opt/apache-jmeter-5.6.zip
+    mode: 0755
+    group: ubuntu
+    owner: ubuntu
+
+- name: unarchive download
+  unarchive:  
+    src: /opt/apache-jmeter-5.6.zip 
+    dest: /opt
+    remote_src: true
