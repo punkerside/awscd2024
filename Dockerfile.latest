@@ -1,0 +1,5 @@
+ARG IMG
+FROM ${IMG}
+RUN apk add --no-cache nodejs
+COPY app/ /app
+CMD [ "node", "app.js" ]

@@ -36,7 +36,8 @@ resource "aws_iam_role_policy" "main" {
         "ecs:*",
         "ecr:*",
         "ec2:*",
-        "acm:*"
+        "acm:*",
+        "logs:*"
       ],
       "Resource": "*"
     },
@@ -78,17 +79,26 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "main" {
+  name = var.name
+
+  tags = {
+    Name = var.name
+  }
+}
+
 resource "aws_ecs_task_definition" "main" {
   family                   = var.name
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 256
   memory                   = 512
+  execution_role_arn       = aws_iam_role.main.arn
 
   container_definitions    = jsonencode([
     {
       name      = var.name
-      image     = "punkerside/noroot:latest"
+      image     = "${data.aws_caller_identity.main.account_id}.dkr.ecr.${data.aws_region.main.name}.amazonaws.com/${var.name}:latest"
       cpu       = 256
       memory    = 512
       essential = true
@@ -96,6 +106,20 @@ resource "aws_ecs_task_definition" "main" {
         {
           containerPort = 3000
           hostPort      = 3000
+        }
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.main.name
+          awslogs-region        = data.aws_region.main.name
+          awslogs-stream-prefix = "ecs"
+        }
+      }
+      environment = [
+        {
+          name = "DB_HOSTNAME"
+          value = data.aws_db_instance.main.address
         }
       ]
     }
@@ -153,7 +177,7 @@ resource "aws_lb_target_group" "main" {
     healthy_threshold = 2
     interval          = 5
     matcher           = "200-299"
-    path              = "/user"
+    path              = "/"
     port              = 3000
     protocol          = "HTTP"
     unhealthy_threshold = 2
@@ -182,7 +206,7 @@ resource "aws_lb_listener" "this" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = data.aws_acm_certificate.main.arn
+  certificate_arn   = aws_acm_certificate.main.arn
 
   default_action {
     type             = "forward"
@@ -246,4 +270,36 @@ resource "aws_route53_record" "this" {
   type            = tolist(aws_acm_certificate.main.domain_validation_options)[0].resource_record_type
   zone_id         = data.aws_route53_zone.main.zone_id
   ttl             = 60
+}
+
+resource "aws_db_subnet_group" "main" {
+  name       = var.name
+  subnet_ids = data.aws_subnets.private.ids
+
+  tags = {
+    Name = var.name
+  }
+}
+
+resource "aws_db_instance" "main" {
+  identifier             = var.name
+  allocated_storage      = 20
+  storage_type           = "gp3"
+  db_name                = "users"
+  engine                 = "postgres"
+  engine_version         = "15.3"
+  instance_class         = "db.m5.large"
+  username               = "postgres"
+  password               = "postgres"
+  skip_final_snapshot    = true
+  apply_immediately      = true
+  db_subnet_group_name   = aws_db_subnet_group.main.name
+  deletion_protection    = false
+  network_type           = "IPV4"
+  multi_az               = false
+  vpc_security_group_ids = [aws_security_group.main.id]
+
+  tags = {
+    Name = var.name
+  }
 }

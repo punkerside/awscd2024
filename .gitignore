@@ -9,3 +9,6 @@ terraform.tfstate.backup
 .config/
 .cache/
 .ansible/
+node_modules/
+.npm/
+package-lock.json

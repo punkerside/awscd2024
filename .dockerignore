@@ -1,0 +1,5 @@
+.npm/
+.cache/
+.config/
+.terraform/
+.terraform.d/

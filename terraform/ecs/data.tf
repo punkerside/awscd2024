@@ -34,7 +34,10 @@ data "aws_route53_zone" "main" {
   private_zone = false
 }
 
-data "aws_acm_certificate" "main" {
-  domain   = "ecs.punkerside.io"
-  statuses = ["ISSUED"]
+data "aws_db_instance" "main" {
+  db_instance_identifier = var.name
 }
+
+data "aws_caller_identity" "main" {}
+
+data "aws_region" "main" {}
