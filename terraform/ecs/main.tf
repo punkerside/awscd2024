@@ -37,7 +37,8 @@ resource "aws_iam_role_policy" "main" {
         "ecr:*",
         "ec2:*",
         "acm:*",
-        "logs:*"
+        "logs:*",
+        "ssmmessages:*"
       ],
       "Resource": "*"
     },
@@ -58,12 +59,32 @@ resource "aws_iam_role_policy" "main" {
 EOF
 }
 
+resource "aws_cloudwatch_log_group" "this" {
+  name = "${var.name}-cluster"
+
+  tags = {
+    Name = var.name
+  }
+}
+
 resource "aws_ecs_cluster" "main" {
   name = var.name
 
   setting {
     name  = "containerInsights"
     value = "disabled"
+  }
+
+  configuration {
+    execute_command_configuration {
+      # kms_key_id = aws_kms_key.example.arn
+      logging    = "OVERRIDE"
+
+      log_configuration {
+        cloud_watch_encryption_enabled = false
+        cloud_watch_log_group_name     = aws_cloudwatch_log_group.this.name
+      }
+    }
   }
 }
 
@@ -94,6 +115,7 @@ resource "aws_ecs_task_definition" "main" {
   cpu                      = 256
   memory                   = 512
   execution_role_arn       = aws_iam_role.main.arn
+  task_role_arn            = aws_iam_role.main.arn
 
   container_definitions    = jsonencode([
     {
@@ -223,6 +245,7 @@ resource "aws_ecs_service" "main" {
   propagate_tags                    = "NONE"
   platform_version                  = "LATEST"
   launch_type                       = "FARGATE"
+  enable_execute_command            = true
 
   network_configuration {
     subnets         = data.aws_subnets.private.ids

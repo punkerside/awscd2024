@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const Pool = require('pg').Pool
 const pool = new Pool({
   user: 'postgres',
@@ -5,6 +7,9 @@ const pool = new Pool({
   host: process.env.DB_HOSTNAME,
   database: 'users',
   port: 5432,
+  ssl: {
+    ca: [fs.readFileSync(path.resolve('./us-east-1-bundle.pem'), 'ascii')]
+  },
 })
 
 const getUsers = (request, response) => {
