@@ -119,7 +119,7 @@ resource "aws_ecs_task_definition" "main" {
       environment = [
         {
           name = "DB_HOSTNAME"
-          value = data.aws_db_instance.main.address
+          value = aws_db_instance.main.address
         }
       ]
     }
