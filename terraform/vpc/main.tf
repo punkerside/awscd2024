@@ -1,5 +1,3 @@
-# base
-
 module "vpc" {
   source  = "punkerside/vpc/aws"
   version = "0.0.6"
@@ -14,5 +12,9 @@ resource "aws_ecr_repository" "main" {
 
   image_scanning_configuration {
     scan_on_push = false
+  }
+
+  tags = {
+    Name = var.name
   }
 }
