@@ -311,7 +311,7 @@ resource "aws_db_instance" "main" {
   db_name                = "users"
   engine                 = "postgres"
   engine_version         = "15.3"
-  instance_class         = "db.m5.large"
+  instance_class         = "db.r5.large"
   username               = "postgres"
   password               = "postgres"
   skip_final_snapshot    = true

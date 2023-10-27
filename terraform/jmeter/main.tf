@@ -76,8 +76,7 @@ resource "aws_security_group" "main" {
 resource "aws_instance" "main" {
   ami                         = data.aws_ami.main.id
   associate_public_ip_address = true
-  # instance_type           = "c7a.2xlarge"
-  instance_type               = "t3a.small"
+  instance_type               = "c7a.2xlarge"
   disable_api_termination     = false
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.main.name

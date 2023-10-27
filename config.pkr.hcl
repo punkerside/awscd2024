@@ -48,6 +48,15 @@ source "amazon-ebs" "main" {
 build {
   sources = ["source.amazon-ebs.main"]
 
+  provisioner "file" {
+    source      = "./testbase.jmx"
+    destination = "/tmp/testbase.jmx"
+  }
+
+  provisioner "shell" {
+    inline = ["sudo mv /tmp/testbase.jmx /opt/testbase.jmx"]
+  }
+
   provisioner "ansible" {
     playbook_file = "ansible/playbook.yml"
     use_proxy     = false

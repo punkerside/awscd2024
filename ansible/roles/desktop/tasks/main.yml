@@ -1,0 +1,32 @@
+- name: install dbus-x11
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - dbus-x11
+
+- name: install desktop
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - ubuntu-desktop
+    - tightvncserver
+    - gnome-panel
+    - gnome-settings-daemon
+    - nautilus
+    - gnome-terminal
+
+- name: download apache jmeter
+  get_url:
+    url: https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.zip
+    dest: /opt/apache-jmeter-5.6.zip
+    mode: 0755
+    group: ubuntu
+    owner: ubuntu
+
+- name: unarchive download
+  unarchive:  
+    src: /opt/apache-jmeter-5.6.zip 
+    dest: /opt
+    remote_src: true
