@@ -46,11 +46,28 @@ resource "aws_iam_role_policy" "main" {
 EOF
 }
 
-resource "aws_cloudwatch_log_group" "main" {
+resource "aws_ecs_cluster" "main" {
   name = "${var.name}-psql"
+
+  setting {
+    name  = "containerInsights"
+    value = "disabled"
+  }
 
   tags = {
     Name = "${var.name}-psql"
+  }
+}
+
+resource "aws_ecs_cluster_capacity_providers" "main" {
+  cluster_name = aws_ecs_cluster.main.name
+
+  capacity_providers = ["FARGATE"]
+
+  default_capacity_provider_strategy {
+    base              = 1
+    weight            = 100
+    capacity_provider = "FARGATE"
   }
 }
 
@@ -75,14 +92,6 @@ resource "aws_ecs_task_definition" "main" {
           hostPort      = 3000
         }
       ]
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          awslogs-group         = aws_cloudwatch_log_group.main.name
-          awslogs-region        = data.aws_region.main.name
-          awslogs-stream-prefix = "ecs"
-        }
-      }
       environment = [
         {
           name = "DB_HOSTNAME"

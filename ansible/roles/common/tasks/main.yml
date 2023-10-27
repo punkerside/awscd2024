@@ -1,6 +1,5 @@
 - name: update all packages to the latest version
-  apt:
-    upgrade: dist
+  shell: apt-get update
 
 - name: install common packages
   apt:

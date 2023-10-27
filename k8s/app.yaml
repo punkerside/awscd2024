@@ -1,36 +1,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: container-demo
+  name: $NAME
   namespace: default
   labels:
-    app: container-demo
+    app: $NAME
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: container-demo
+      app: $NAME
   template:
     metadata:
       labels:
-        app: container-demo
+        app: $NAME
     spec:
       automountServiceAccountToken: false
       containers:
-      - name: container-demo
-        image: punkerside/noroot:latest
+      - name: $NAME
+        image: $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$NAME:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000
         livenessProbe:
           httpGet:
-            path: /user/
+            path: /
             port: 3000
           initialDelaySeconds: 5
           periodSeconds: 3
         readinessProbe:
           httpGet:
-            path: /user/
+            path: /
             port: 3000
           initialDelaySeconds: 5
           periodSeconds: 3
@@ -45,12 +45,37 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: container-demo
+  name: $NAME
   namespace: default
 spec:
   selector:
-    app: container-demo
+    app: $NAME
   ports:
     - protocol: TCP
       port: 80
       targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: default
+  name: $NAME
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/certificate-arn: $CERTIFICATE_ARN
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ip-address-type: ipv4
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: $NAME
+              port:
+                number: 3000

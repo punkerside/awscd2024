@@ -141,7 +141,7 @@ resource "aws_ecs_task_definition" "main" {
       environment = [
         {
           name = "DB_HOSTNAME"
-          value = aws_db_instance.main.address
+          value = data.aws_db_instance.main.address
         }
       ]
     }
@@ -293,36 +293,4 @@ resource "aws_route53_record" "this" {
   type            = tolist(aws_acm_certificate.main.domain_validation_options)[0].resource_record_type
   zone_id         = data.aws_route53_zone.main.zone_id
   ttl             = 60
-}
-
-resource "aws_db_subnet_group" "main" {
-  name       = var.name
-  subnet_ids = data.aws_subnets.private.ids
-
-  tags = {
-    Name = var.name
-  }
-}
-
-resource "aws_db_instance" "main" {
-  identifier             = var.name
-  allocated_storage      = 20
-  storage_type           = "gp3"
-  db_name                = "users"
-  engine                 = "postgres"
-  engine_version         = "15.3"
-  instance_class         = "db.r5.large"
-  username               = "postgres"
-  password               = "postgres"
-  skip_final_snapshot    = true
-  apply_immediately      = true
-  db_subnet_group_name   = aws_db_subnet_group.main.name
-  deletion_protection    = false
-  network_type           = "IPV4"
-  multi_az               = false
-  vpc_security_group_ids = [aws_security_group.main.id]
-
-  tags = {
-    Name = var.name
-  }
 }
