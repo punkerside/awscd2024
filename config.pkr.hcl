@@ -21,11 +21,11 @@ locals {
 
 source "amazon-ebs" "main" {
   ami_name      = "${var.name}-${local.timestamp}"
-  instance_type = "t3a.small"
+  instance_type = "c7a.large"
 
   subnet_filter {
     filters = {
-          "tag:Name": "${var.name}-public-*"
+          "tag:Name": "*-public-us-east-1b"
     }
     most_free = true
     random    = false

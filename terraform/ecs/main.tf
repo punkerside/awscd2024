@@ -240,7 +240,7 @@ resource "aws_ecs_service" "main" {
   name                              = var.name
   cluster                           = aws_ecs_cluster.main.id
   task_definition                   = aws_ecs_task_definition.main.arn
-  desired_count                     = 2
+  desired_count                     = 3
   health_check_grace_period_seconds = 0
   propagate_tags                    = "NONE"
   platform_version                  = "LATEST"

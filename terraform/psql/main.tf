@@ -32,11 +32,8 @@ resource "aws_iam_role_policy" "main" {
     {
       "Effect": "Allow",
       "Action": [
-        "elasticloadbalancing:*",
         "ecs:*",
         "ecr:*",
-        "ec2:*",
-        "acm:*",
         "logs:*"
       ],
       "Resource": "*"
@@ -86,12 +83,7 @@ resource "aws_ecs_task_definition" "main" {
       cpu       = 256
       memory    = 512
       essential = true
-      portMappings = [
-        {
-          containerPort = 3000
-          hostPort      = 3000
-        }
-      ]
+
       environment = [
         {
           name = "DB_HOSTNAME"

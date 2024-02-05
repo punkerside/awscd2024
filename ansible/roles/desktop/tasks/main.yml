@@ -6,16 +6,9 @@
     - dbus-x11
 
 - name: install desktop
-  apt:
-    name: "{{ packages }}"
-  vars:
-    packages:
-    - ubuntu-desktop
-    - tightvncserver
-    - gnome-panel
-    - gnome-settings-daemon
-    - nautilus
-    - gnome-terminal
+  command: sudo apt-get -y install ubuntu-desktop tightvncserver gnome-panel gnome-settings-daemon nautilus gnome-terminal
+  environment:
+    DEBIAN_FRONTEND: noninteractive
 
 - name: download apache jmeter
   get_url:

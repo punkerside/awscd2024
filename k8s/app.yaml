@@ -20,6 +20,9 @@ spec:
       - name: $NAME
         image: $ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$NAME:latest
         imagePullPolicy: IfNotPresent
+        env:
+        - name: DB_HOSTNAME
+          value: $DB_HOSTNAME
         ports:
         - containerPort: 3000
         livenessProbe:
@@ -61,14 +64,8 @@ metadata:
   namespace: default
   name: $NAME
   annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/certificate-arn: $CERTIFICATE_ARN
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/ip-address-type: ipv4
+    traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
-  ingressClassName: alb
   rules:
     - http:
         paths:
@@ -78,4 +75,4 @@ spec:
             service:
               name: $NAME
               port:
-                number: 3000
+                number: 80
