@@ -7,7 +7,7 @@ resource "aws_iam_role" "main" {
     {
       "Action": "sts:AssumeRole",
       "Principal": {
-        "Service": ["eks.amazonaws.com", "eks-fargate-pods.amazonaws.com", "ec2.amazonaws.com"]
+        "Service": ["eks.amazonaws.com", "eks-fargate-pods.amazonaws.com"]
       },
       "Effect": "Allow",
       "Sid": ""
@@ -105,73 +105,73 @@ resource "aws_eks_cluster" "main" {
   ]
 }
 
-# resource "aws_eks_fargate_profile" "main" {
-#   cluster_name           = aws_eks_cluster.main.name
-#   fargate_profile_name   = "default"
-#   pod_execution_role_arn = aws_iam_role.main.arn
-#   subnet_ids             = data.aws_subnets.private.ids
+resource "aws_eks_fargate_profile" "main" {
+  cluster_name           = aws_eks_cluster.main.name
+  fargate_profile_name   = "default"
+  pod_execution_role_arn = aws_iam_role.main.arn
+  subnet_ids             = data.aws_subnets.private.ids
 
-#   selector {
-#     namespace = "default"
-#   }
+  selector {
+    namespace = "default"
+  }
 
-#   selector {
-#     namespace = "kube-system"
-#   }
-# }
+  selector {
+    namespace = "kube-system"
+  }
+}
 
-# resource "aws_iam_openid_connect_provider" "main" {
-#   client_id_list  = ["sts.amazonaws.com"]
-#   thumbprint_list = [data.tls_certificate.main.certificates[0].sha1_fingerprint]
-#   url             = aws_eks_cluster.main.identity.0.oidc.0.issuer
-# }
+resource "aws_iam_openid_connect_provider" "main" {
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.main.certificates[0].sha1_fingerprint]
+  url             = aws_eks_cluster.main.identity.0.oidc.0.issuer
+}
 
-# resource "aws_iam_role" "this" {
-#   name               = "${var.name}-ingress"
-#   assume_role_policy = <<EOF
-# {
-#     "Version": "2012-10-17",
-#     "Statement": [
-#         {
-#             "Effect": "Allow",
-#             "Principal": {
-#                 "Federated": "arn:aws:iam::${data.aws_caller_identity.main.account_id}:oidc-provider/oidc.eks.${data.aws_region.main.name}.amazonaws.com/id/${substr(aws_eks_cluster.main.identity.0.oidc.0.issuer, -32, -1)}"
-#             },
-#             "Action": "sts:AssumeRoleWithWebIdentity",
-#             "Condition": {
-#                 "StringEquals": {
-#                     "oidc.eks.${data.aws_region.main.name}.amazonaws.com/id/${substr(aws_eks_cluster.main.identity.0.oidc.0.issuer, -32, -1)}:aud": "sts.amazonaws.com"
-#                 }
-#             }
-#         }
-#     ]
-# }
-# EOF
+resource "aws_iam_role" "this" {
+  name               = "${var.name}-ingress"
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Federated": "arn:aws:iam::${data.aws_caller_identity.main.account_id}:oidc-provider/oidc.eks.${data.aws_region.main.name}.amazonaws.com/id/${substr(aws_eks_cluster.main.identity.0.oidc.0.issuer, -32, -1)}"
+            },
+            "Action": "sts:AssumeRoleWithWebIdentity",
+            "Condition": {
+                "StringEquals": {
+                    "oidc.eks.${data.aws_region.main.name}.amazonaws.com/id/${substr(aws_eks_cluster.main.identity.0.oidc.0.issuer, -32, -1)}:aud": "sts.amazonaws.com"
+                }
+            }
+        }
+    ]
+}
+EOF
 
-#   tags = {
-#     Name = "${var.name}-ingress"
-#   }
-# }
+  tags = {
+    Name = "${var.name}-ingress"
+  }
+}
 
-# resource "aws_iam_role_policy" "this" {
-#   name = "${var.name}-ingress"
-#   role = aws_iam_role.this.id
+resource "aws_iam_role_policy" "this" {
+  name = "${var.name}-ingress"
+  role = aws_iam_role.this.id
 
-#   policy = <<EOF
-# {
-#   "Version": "2012-10-17",
-#   "Statement": [
-#     {
-#       "Effect": "Allow",
-#       "Action": [
-#         "*"
-#       ],
-#       "Resource": "*"
-#     }
-#   ]
-# }
-# EOF
-# }
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
 
 resource "aws_acm_certificate" "main" {
   domain_name       = "eks.punkerside.io"
@@ -185,31 +185,4 @@ resource "aws_route53_record" "main" {
   type            = tolist(aws_acm_certificate.main.domain_validation_options)[0].resource_record_type
   zone_id         = data.aws_route53_zone.main.zone_id
   ttl             = 60
-}
-
-resource "aws_eks_node_group" "main" {
-  cluster_name         = aws_eks_cluster.main.name
-  node_group_name      = "default"
-  node_role_arn        = aws_iam_role.main.arn
-  subnet_ids           = data.aws_subnets.private.ids
-  ami_type             = "AL2_x86_64"
-  capacity_type        = "SPOT"
-  force_update_version = false
-  instance_types       = ["c7a.large"]
-
-  scaling_config {
-    desired_size = 1
-    max_size     = 2
-    min_size     = 1
-  }
-
-  tags = {
-    Name = var.name
-  }
-
-  depends_on = [
-    aws_iam_role_policy_attachment.AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.AmazonEKS_CNI_Policy,
-    aws_iam_role_policy_attachment.AmazonEC2ContainerRegistryReadOnly,
-  ]
 }

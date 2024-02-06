@@ -1,3 +1,59 @@
+resource "aws_security_group" "main" {
+  name        = "${var.name}-psql"
+  description = "inbound traffic"
+  vpc_id      = data.aws_vpc.main.id
+
+  ingress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.name}-psql"
+  }
+}
+
+resource "aws_db_subnet_group" "main" {
+  name       = var.name
+  subnet_ids = data.aws_subnets.private.ids
+
+  tags = {
+    Name = var.name
+  }
+}
+
+resource "aws_db_instance" "main" {
+  identifier             = var.name
+  allocated_storage      = 20
+  storage_type           = "gp3"
+  db_name                = "users"
+  engine                 = "postgres"
+  engine_version         = "15.3"
+  instance_class         = "db.t3.medium"
+  username               = "postgres"
+  password               = "postgres"
+  skip_final_snapshot    = true
+  apply_immediately      = true
+  db_subnet_group_name   = aws_db_subnet_group.main.name
+  deletion_protection    = false
+  network_type           = "IPV4"
+  multi_az               = false
+  vpc_security_group_ids = [aws_security_group.main.id]
+
+  tags = {
+    Name = var.name
+  }
+}
+
 resource "aws_iam_role" "main" {
   name               = "${var.name}-psql"
   assume_role_policy = <<EOF
@@ -68,6 +124,7 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
   }
 }
 
+
 resource "aws_ecs_task_definition" "main" {
   family                   = "${var.name}-psql"
   requires_compatibilities = ["FARGATE"]
@@ -87,33 +144,59 @@ resource "aws_ecs_task_definition" "main" {
       environment = [
         {
           name = "DB_HOSTNAME"
-          value = data.aws_db_instance.main.address
+          value = aws_db_instance.main.address
         }
       ]
     }
   ])
 }
 
-resource "aws_security_group" "main" {
-  name        = "${var.name}-psql"
-  description = "inbound traffic"
-  vpc_id      = data.aws_vpc.main.id
 
-  ingress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-  }
 
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-  }
 
-  tags = {
-    Name = "${var.name}-psql"
-  }
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# resource "aws_security_group" "main" {
+#   name        = "${var.name}-psql"
+#   description = "inbound traffic"
+#   vpc_id      = data.aws_vpc.main.id
+
+#   ingress {
+#     from_port        = 0
+#     to_port          = 0
+#     protocol         = "-1"
+#     cidr_blocks      = ["0.0.0.0/0"]
+#   }
+
+#   egress {
+#     from_port        = 0
+#     to_port          = 0
+#     protocol         = "-1"
+#     cidr_blocks      = ["0.0.0.0/0"]
+#   }
+
+#   tags = {
+#     Name = "${var.name}-psql"
+#   }
+# }

@@ -1,6 +1,6 @@
 ARG IMG
 FROM ${IMG}
 RUN apk add --no-cache postgresql-client
-COPY init.sql init.sql
+COPY app/init.sql init.sql
 ENV PGPASSWORD=postgres
 CMD ["sh", "-c", "psql -U postgres -f init.sql -h ${DB_HOSTNAME}"]

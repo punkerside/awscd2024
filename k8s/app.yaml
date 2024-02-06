@@ -64,8 +64,11 @@ metadata:
   namespace: default
   name: $NAME
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/certificate-arn: $CERTIFICATE_ARN
 spec:
+  ingressClassName: alb
   rules:
     - http:
         paths:
