@@ -1,5 +1,5 @@
 resource "aws_iam_role" "main" {
-  name               = var.name
+  name               = "${var.name}-jmeter"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -7,7 +7,7 @@ resource "aws_iam_role" "main" {
     {
       "Action": "sts:AssumeRole",
       "Principal": {
-        "Service": ["ec2.amazonaws.com"]
+        "Service": ["codebuild.amazonaws.com", "codepipeline.amazonaws.com"]
       },
       "Effect": "Allow",
       "Sid": ""
@@ -17,12 +17,13 @@ resource "aws_iam_role" "main" {
 EOF
 
   tags = {
-    Name = var.name
+    Name = "${var.name}-jmeter"
   }
 }
 
+
 resource "aws_iam_role_policy" "main" {
-  name = var.name
+  name = "${var.name}-jmeter"
   role = aws_iam_role.main.id
 
   policy = <<EOF
@@ -30,73 +31,225 @@ resource "aws_iam_role_policy" "main" {
   "Version": "2012-10-17",
   "Statement": [
     {
+      "Effect":"Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:GetObjectVersion",
+        "s3:GetBucketVersioning",
+        "s3:PutObject",
+        "s3:PutObjectAcl",
+        "s3:Get*"
+      ],
+      "Resource": [
+        "arn:aws:s3:::${var.name}-jmeter",
+        "arn:aws:s3:::${var.name}-jmeter/*"
+      ]
+    },
+    {
       "Effect": "Allow",
       "Action": [
-        "ec2:*",
-        "ssm:*",
-        "ec2messages:*",
-        "ssmmessages:*"
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
       ],
-      "Resource": "*"
+      "Resource": [
+        "arn:aws:logs:${data.aws_region.main.name}:${data.aws_caller_identity.main.account_id}:log-group:${var.name}-jmeter",
+        "arn:aws:logs:${data.aws_region.main.name}:${data.aws_caller_identity.main.account_id}:log-group:${var.name}-jmeter:log-stream:*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild"
+      ],
+      "Resource": "arn:aws:codebuild:${data.aws_region.main.name}:${data.aws_caller_identity.main.account_id}:project/${var.name}-jmeter"
     }
   ]
 }
 EOF
 }
 
-resource "aws_iam_instance_profile" "main" {
-  name = var.name
-  role = aws_iam_role.main.name
-}
-
-resource "aws_security_group" "main" {
-  name        = var.name
-  description = "inbound traffic"
-  vpc_id      = data.aws_vpc.main.id
-
-  ingress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-  }
+resource "aws_s3_bucket" "main" {
+  bucket        = "${var.name}-jmeter"
+  force_destroy = true
 
   tags = {
     Name = var.name
   }
 }
 
-resource "aws_instance" "main" {
-  ami                         = data.aws_ami.main.id
-  associate_public_ip_address = true
-  instance_type               = "c7a.2xlarge"
-  disable_api_termination     = false
-  ebs_optimized               = true
-  iam_instance_profile        = aws_iam_instance_profile.main.name
-  # key_name                    = "test-01"
-  subnet_id                   = data.aws_subnets.main.ids[1]
-  vpc_security_group_ids      = [aws_security_group.main.id]
+resource "aws_s3_bucket_ownership_controls" "main" {
+  bucket = aws_s3_bucket.main.id
 
-  instance_market_options {
-    spot_options {}
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_acl" "main" {
+  bucket = aws_s3_bucket.main.id
+  acl    = "private"
+
+  depends_on = [
+    aws_s3_bucket_ownership_controls.main
+  ]
+}
+
+resource "aws_s3_bucket_versioning" "main" {
+  bucket = aws_s3_bucket.main.id
+
+  versioning_configuration {
+    status = "Disabled"
+  }
+}
+
+resource "aws_s3_bucket_policy" "main" {
+  bucket = aws_s3_bucket.main.id
+
+  policy = <<POLICY
+{
+    "Id": "ExamplePolicy",
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowSSLRequestsOnly",
+            "Action": "s3:*",
+            "Effect": "Deny",
+            "Resource": [
+                "arn:aws:s3:::${aws_s3_bucket.main.id}",
+                "arn:aws:s3:::${aws_s3_bucket.main.id}/*"
+            ],
+            "Condition": {
+                "Bool": {
+                     "aws:SecureTransport": "false"
+                }
+            },
+           "Principal": "*"
+        }
+    ]
+}
+POLICY
+}
+
+resource "aws_cloudwatch_log_group" "main" {
+  name = "${var.name}-jmeter"
+
+  tags = {
+    Name = "${var.name}-jmeter"
+  }
+}
+
+resource "aws_codebuild_project" "main" {
+  name          = "${var.name}-jmeter"
+  description   = "${var.name}-jmeter"
+  build_timeout = 30
+  service_role  = aws_iam_role.main.arn
+
+  artifacts {
+    type = "CODEPIPELINE"
   }
 
-  ebs_block_device {
-    delete_on_termination = true
-    device_name           = "/dev/sda1"
-    encrypted             = false
-    volume_size           = 28
-    volume_type           = "gp3"
+  environment {
+    compute_type    = "BUILD_GENERAL1_LARGE"
+    image           = "aws/codebuild/standard:7.0"
+    type            = "LINUX_CONTAINER"
+    privileged_mode = true
+
+    environment_variable {
+      name  = "apiEndpoint"
+      value = ""
+      type  = "PLAINTEXT"
+    }
+  }
+
+  logs_config {
+    cloudwatch_logs {
+      group_name  = aws_cloudwatch_log_group.main.name
+    }
+  }
+
+  source {
+    type      = "CODEPIPELINE"
+    buildspec = <<BUILDSPEC
+version: 0.2
+phases:
+  build:
+    commands:
+      - ./terraform/jmeter/run.sh
+BUILDSPEC
   }
 
   tags = {
-    Name = var.name
+    Name = "${var.name}-jmeter"
+  }
+}
+
+resource "aws_codestarconnections_connection" "main" {
+  name          = "${var.name}"
+  provider_type = "GitHub"
+}
+
+resource "aws_codepipeline" "main" {
+  name          = "${var.name}-jmeter"
+  role_arn      = aws_iam_role.main.arn
+  pipeline_type = "V2"
+
+  artifact_store {
+    location = aws_s3_bucket.main.bucket
+    type     = "S3"
+  }
+
+  variable {
+    name          = "apiEndpoint"
+    default_value = ""
+    description   = "API endpoint to test"
+  }
+
+  stage {
+    name = "Source"
+
+    action {
+      name             = "Source"
+      category         = "Source"
+      owner            = "AWS"
+      provider         = "CodeStarSourceConnection"
+      version          = "1"
+      output_artifacts = ["source_output"]
+
+      configuration = {
+        ConnectionArn        = aws_codestarconnections_connection.main.arn
+        FullRepositoryId     = "punkerside/ecs-vs-eks"
+        BranchName           = "main"
+        OutputArtifactFormat = "CODE_ZIP"
+      }
+    }
+  }
+
+  stage {
+    name = "Build"
+
+    action {
+      name             = "Build"
+      category         = "Build"
+      owner            = "AWS"
+      provider         = "CodeBuild"
+      input_artifacts  = ["source_output"]
+      version          = "1"
+
+      configuration = {
+        ProjectName = aws_codebuild_project.main.name
+        EnvironmentVariables = jsonencode([
+          {
+            type  = "PLAINTEXT"
+            name  = "apiEndpoint"
+            value = "#{variables.apiEndpoint}"
+          }
+        ])
+      }
+    }
+  }
+
+  tags = {
+    Name = "${var.name}-jmeter"
   }
 }
