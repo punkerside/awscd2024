@@ -82,6 +82,13 @@ jmeter:
 #	@docker run --rm -u ${DOCKER_UID}:${DOCKER_GID} -v ${PWD}/passwd:/etc/passwd:ro -v ${PWD}/terraform/jmeter:/app -e AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} ${NAME}:terraform apply -var="name=${NAME}" -auto-approve
 	aws s3 cp testbase.jmx s3://container-benchmark-jmeter/
 
+# exec jmeter-gui
+jmeter-gui:
+	@docker build -t ${NAME}:jmeter -f docker/Dockerfile.jmeter .
+#	@echo "${DOCKER_USER}:x:${DOCKER_UID}:${DOCKER_GID}::/app:/sbin/nologin" > passwd
+	@docker run --rm -e DISPLAY=${DISPLAY} -v /tmp/.X11-unix:/tmp/.X11-unix -v ${PWD}:/app ${NAME}:jmeter
+
+
 # destroy all infrastructure
 destroy:
 #	@export NAME=${NAME} AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} CERTIFICATE_ARN=${CERTIFICATE_ARN} DB_HOSTNAME=${DB_HOSTNAME} NAME=${NAME} ACCOUNT_ID=$(shell aws sts get-caller-identity --query "Account" --output text) && envsubst < k8s/app.yaml | kubectl delete -f -

@@ -3,3 +3,5 @@
 .config/
 .terraform/
 .terraform.d/
+.ansible/
+.ssh/
