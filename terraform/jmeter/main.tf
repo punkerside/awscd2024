@@ -63,6 +63,13 @@ resource "aws_iam_role_policy" "main" {
         "codebuild:StartBuild"
       ],
       "Resource": "arn:aws:codebuild:${data.aws_region.main.name}:${data.aws_caller_identity.main.account_id}:project/${var.name}-jmeter"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "codestar-connections:UseConnection"
+      ],
+      "Resource": "*"
     }
   ]
 }
