@@ -7,14 +7,13 @@ apt-get upgrade -y
 
 apt-get install -y gcc default-jre curl unzip
 
-
 cd /opt
+aws s3 cp s3://container-benchmark-jmeter/testbase.jmx testbase.jmx
+
 curl https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.zip -o apache-jmeter-5.6.3.zip
 unzip apache-jmeter-5.6.3.zip
 
-pwd
-ls -la
-ls -la apache-jmeter-5.6.3/
+cd apache-jmeter-5.6.3/bin/
+./jmeter -n -t /opt/testbase.jmx -l /opt/results.csv
 
-aws s3 cp s3://container-benchmark-jmeter/testbase.jmx testbase.jmx
-ls -la
+cat /opt/results.csv
