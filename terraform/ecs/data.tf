@@ -30,7 +30,7 @@ data "aws_subnets" "private" {
 }
 
 data "aws_route53_zone" "main" {
-  name         = "punkerside.io."
+  name         = "${var.domain}."
   private_zone = false
 }
 

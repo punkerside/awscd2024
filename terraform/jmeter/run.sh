@@ -13,6 +13,8 @@ aws s3 cp s3://container-benchmark-jmeter/testbase.jmx testbase.jmx
 curl https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.zip -o apache-jmeter-5.6.3.zip
 unzip apache-jmeter-5.6.3.zip
 
+aws s3 sync s3://container-benchmark-jmeter/ /opt/apache-jmeter-5.6.3/lib/
+
 cd apache-jmeter-5.6.3/bin/
 ./jmeter -n -t /opt/testbase.jmx -l /opt/results.csv
 

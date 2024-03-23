@@ -271,7 +271,7 @@ resource "aws_ecs_service" "main" {
 
 resource "aws_route53_record" "main" {
   zone_id = data.aws_route53_zone.main.zone_id
-  name    = "ecs.punkerside.io"
+  name    = "ecs.${var.domain}"
   type    = "A"
 
   alias {
@@ -282,7 +282,7 @@ resource "aws_route53_record" "main" {
 }
 
 resource "aws_acm_certificate" "main" {
-  domain_name       = "ecs.punkerside.io"
+  domain_name       = "ecs.${var.domain}"
   validation_method = "DNS"
 }
 
