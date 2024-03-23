@@ -208,8 +208,26 @@ resource "aws_codepipeline" "main" {
 
   variable {
     name          = "apiEndpoint"
-    default_value = ""
+    default_value = "ecs.punkerside.io"
     description   = "API endpoint to test"
+  }
+
+  variable {
+    name          = "numThreads"
+    default_value = "1000"
+    description   = "numero de hilos"
+  }
+
+  variable {
+    name          = "startUsers"
+    default_value = "100"
+    description   = "usuarios iniciales"
+  }
+
+  variable {
+    name          = "flightTime"
+    default_value = "180"
+    description   = "tiempo de vuelo"
   }
 
   stage {
