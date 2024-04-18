@@ -1,14 +1,13 @@
-NAME               = container-benchmark
-DOCKER_UID         = $(shell id -u)
-DOCKER_GID         = $(shell id -g)
-DOCKER_USER        = $(shell whoami)
+NAME        = container-benchmark
+DOCKER_UID  = $(shell id -u)
+DOCKER_GID  = $(shell id -g)
+DOCKER_USER = $(shell whoami)
 
-AWS_DOMAIN         = punkerside.io
-KUBECONFIG         = /tmp/${NAME}
+AWS_DOMAIN  = punkerside.io
+KUBECONFIG  = /tmp/${NAME}
 
 export AWS_DEFAULT_REGION=us-east-1
 export DOCKER_BUILDKIT=0
-
 
 # creating base container images
 base:
@@ -21,10 +20,13 @@ vpc:
 	@cd terraform/vpc/ && terraform init
 	@cd terraform/vpc/ && terraform apply -var="name=${NAME}" -auto-approve
 
-# provisioning ami and server for jmeter
-jmeter:
+# provisioning ami for jmeter
+ami:
 	@packer init config.pkr.hcl
 	@packer build -var "name=${NAME}" config.pkr.hcl
+
+# provisioning server for jmeter
+jmeter:
 	@cd terraform/jmeter/ && terraform init
 	@cd terraform/jmeter/ && terraform apply -var="name=${NAME}" -auto-approve
 
@@ -64,6 +66,9 @@ eks:
 	@helm repo update eks
 	@helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=${NAME} --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller --set region=${AWS_DEFAULT_REGION} --set vpcId=$(shell aws ec2 describe-vpcs --filters Name=tag:Name,Values=${NAME} --region ${AWS_DEFAULT_REGION} | jq -r .Vpcs[0].VpcId)
 	@export NAME=${NAME} AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} CERTIFICATE_ARN=$(shell aws acm list-certificates --query "CertificateSummaryList[?DomainName=='eks.punkerside.io'].CertificateArn" --output text --region ${AWS_DEFAULT_REGION}) DB_HOSTNAME=$(shell aws rds describe-db-instances --db-instance-identifier ${NAME} --region ${AWS_DEFAULT_REGION} | jq -r .DBInstances[0].Endpoint.Address) ACCOUNT_ID=$(shell aws sts get-caller-identity --query "Account" --output text) && envsubst < k8s/app.yaml | kubectl apply -f -
+
+# config eks cluster
+eks-config:
 	@rm -rf /tmp/sample.json && cp terraform/eks/sample.json /tmp/sample.json
 	@sed -i 's|varHostedZoneId|'$(shell aws elbv2 describe-load-balancers --names ${NAME}-eks --region ${AWS_DEFAULT_REGION} | jq -r .LoadBalancers[0].CanonicalHostedZoneId)'|g' /tmp/sample.json
 	@sed -i 's|varDNSName|'$(shell aws elbv2 describe-load-balancers --names container-benchmark-eks --region us-east-1 | jq -r .LoadBalancers[0].DNSName)'|g' /tmp/sample.json
