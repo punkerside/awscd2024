@@ -8,8 +8,16 @@
   environment:
     DEBIAN_FRONTEND: noninteractive
 
+# - name: create directory to configure vnc
+#   shell: mkdir /home/ubuntu/.vnc/ && chown -R ubuntu:ubuntu /home/ubuntu/.vnc/
+
 - name: create directory to configure vnc
-  shell: mkdir /home/ubuntu/.vnc/ && chown -R ubuntu:ubuntu /home/ubuntu/.vnc/
+  file: 
+    path: /home/ubuntu/.vnc/
+    owner: ubuntu
+    group: ubuntu
+    mode: 0755
+    state: directory
 
 - name: copy xstartup
   copy:

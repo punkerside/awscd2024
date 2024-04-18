@@ -1,0 +1,17 @@
+{
+  "Comment": "Creating Alias resource record sets in Route 53",
+  "Changes": [
+    {
+      "Action": "CREATE",
+      "ResourceRecordSet": {
+        "Name": "eks.punkerside.io",
+        "Type": "A",
+        "AliasTarget": {
+          "HostedZoneId": "varHostedZoneId",
+          "DNSName": "varDNSName",
+          "EvaluateTargetHealth": false
+        }
+      }
+    }
+  ]
+}

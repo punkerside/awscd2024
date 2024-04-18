@@ -64,6 +64,7 @@ metadata:
   namespace: default
   name: $NAME
   annotations:
+    alb.ingress.kubernetes.io/load-balancer-name: $NAME-eks
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/certificate-arn: $CERTIFICATE_ARN

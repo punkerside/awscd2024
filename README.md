@@ -3,3 +3,6 @@ curl https://ecs.punkerside.io/user
 
 
 curl https://eks.punkerside.io/user
+
+
+vncserver :1

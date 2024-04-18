@@ -80,7 +80,7 @@ resource "aws_instance" "main" {
   disable_api_termination     = false
   ebs_optimized               = true
   iam_instance_profile        = aws_iam_instance_profile.main.name
-  subnet_id                   = data.aws_subnets.main.ids[0]
+  subnet_id                   = data.aws_subnets.main.ids[1]
   vpc_security_group_ids      = [aws_security_group.main.id]
 
   # instance_market_options {
