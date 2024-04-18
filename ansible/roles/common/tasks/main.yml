@@ -1,0 +1,20 @@
+- name: update all packages to the latest version
+  shell: apt-get update && apt-get upgrade -y
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: install common packages
+  command: apt-get install -y gcc
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: configure limits
+  shell: echo "fs.file-max=500000" >> /etc/sysctl.conf
+
+- name: copy limits config
+  copy:
+    src: "{{ role_path }}/files/limits.conf"
+    dest: /etc/security/limits.conf
+    owner: root
+    group: root
+    mode: 0755

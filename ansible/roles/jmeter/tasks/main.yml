@@ -1,0 +1,50 @@
+- name: install common packages
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - default-jre
+    - curl
+    - unzip
+
+- name: download apache jmeter
+  get_url:
+    url: https://dlcdn.apache.org//jmeter/binaries/apache-jmeter-5.6.3.zip
+    dest: /opt/apache-jmeter-5.6.3.zip
+    mode: 0755
+    group: ubuntu
+    owner: ubuntu
+
+- name: unarchive download
+  unarchive:  
+    src: /opt/apache-jmeter-5.6.3.zip
+    dest: /opt
+    remote_src: true
+
+- name: copy plugins
+  copy:
+    src: "{{ role_path }}/files/plugins.zip"
+    dest: /opt
+    owner: ubuntu
+    group: ubuntu
+    mode: 0755
+
+- name: unarchive plugins
+  unarchive:  
+    src: /opt/plugins.zip
+    dest: /opt/apache-jmeter-5.6.3/lib/ext
+    remote_src: true
+
+- name: config plugins
+  command: mv /opt/apache-jmeter-5.6.3/lib/ext/json-lib-2.4-jdk15.jar /opt/apache-jmeter-5.6.3/lib/ext/cmdrunner-2.3.jar /opt/apache-jmeter-5.6.3/lib/ext/jmeter-plugins-cmn-jmeter-0.7.jar /opt/apache-jmeter-5.6.3/lib/
+
+- name: config jmeter
+  shell: chown -R ubuntu:ubuntu /opt/apache-jmeter-5.6.3/
+
+- name: copy testbase.jmx
+  copy:
+    src: "{{ role_path }}/files/testbase.jmx"
+    dest: /opt/testbase.jmx
+    owner: ubuntu
+    group: ubuntu
+    mode: 0755

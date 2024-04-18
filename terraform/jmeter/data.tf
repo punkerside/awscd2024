@@ -20,22 +20,22 @@ data "aws_subnets" "main" {
   }
 }
 
-# data "aws_ami" "main" {
-#   most_recent = true
-#   owners      = ["self"]
+data "aws_ami" "main" {
+  most_recent = true
+  owners      = ["self"]
 
-#   filter {
-#     name   = "name"
-#     values = ["${var.name}-*"]
-#   }
+  filter {
+    name   = "name"
+    values = ["${var.name}-*"]
+  }
 
-#   filter {
-#     name   = "root-device-type"
-#     values = ["ebs"]
-#   }
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
 
-#   filter {
-#     name   = "virtualization-type"
-#     values = ["hvm"]
-#   }
-# }
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}

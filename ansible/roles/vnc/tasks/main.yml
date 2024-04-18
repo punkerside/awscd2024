@@ -1,0 +1,20 @@
+- name: install dbus-x11
+  command: apt-get -y install dbus-x11
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: install desktop
+  command: apt-get -y install ubuntu-desktop tightvncserver gnome-panel gnome-settings-daemon nautilus gnome-terminal
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: create directory to configure vnc
+  shell: mkdir /home/ubuntu/.vnc/ && chown -R ubuntu:ubuntu /home/ubuntu/.vnc/
+
+- name: copy xstartup
+  copy:
+    src: "{{ role_path }}/files/xstartup"
+    dest: /home/ubuntu/.vnc/xstartup
+    owner: ubuntu
+    group: ubuntu
+    mode: 0755
