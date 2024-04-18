@@ -33,15 +33,36 @@ make base
 make vpc
 ```
 
-3. Crear AMI para JMeter
+3. Desplegando dependencias
 
 ```bash
-make ami
+make dependencies
 ```
 
-4. Crear servidor para JMeter
+4. Crear cluster ECS
 
 ```bash
+make ecs
+```
+
+5. Crear cluster EKS
+
+```bash
+make eks
+```
+
+6. Configurando cluster EKS
+
+```bash
+make eks-config
+```
+
+7. Aprovisionando JMeter
+
+```bash
+# creando ami
+make ami
+# creando servidor
 make jmeter
 ```
 
@@ -49,30 +70,6 @@ Para iniciar el servicio de VNC dentro del servidor JMeter, se debe conectar por
 
 ```bash
 vncserver :1
-```
-
-5. Desplegando dependencias
-
-```bash
-make dependencies
-```
-
-6. Crear cluster ECS
-
-```bash
-make ecs
-```
-
-7. Crear cluster EKS
-
-```bash
-make eks
-```
-
-8. Configurando cluster EKS
-
-```bash
-make eks-config
 ```
 
 ## Pruebas
