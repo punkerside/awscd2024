@@ -76,7 +76,7 @@ eks-config:
 
 # destroy all infrastructure
 destroy:
-#	@kubectl delete ingress container-benchmark
+	@kubectl delete ingress container-benchmark
 	@cd terraform/jmeter/ && terraform destroy -var="name=${NAME}" -auto-approve
 	@cd terraform/ecs/ && terraform destroy -var="name=${NAME}" -var="domain=${AWS_DOMAIN}" -auto-approve
 	@cd terraform/eks/ && terraform destroy -var="name=${NAME}" -auto-approve
